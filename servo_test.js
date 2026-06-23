@@ -16,7 +16,7 @@ const STEP_SIZE = 50;   // How many uS to move per tick
 const INTERVAL = 20;    // Speed of movement (ms)
 
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
-const INTERVAL360 = 1200;               // milliseconds to spin 360 degrees
+const INTERVAL360 = 1250;               // milliseconds to spin 360 degrees
 const LOOP_INTERVAL = INTERVAL360 / 10; // Milliseconds for main timer loop ()
 
 let currentPulse = MIN_PULSE;
