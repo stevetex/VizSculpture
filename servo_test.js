@@ -17,7 +17,7 @@ const INTERVAL = 20;    // Speed of movement (ms)
 
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
 const INTERVAL360 = [1370, 1340];       // milliseconds to spin 360 degrees backward,forward
-const LOOP_INTERVAL = INTERVAL360 / 10; // Milliseconds for main timer loop ()
+const LOOP_INTERVAL = [INTERVAL360[0] / 10, INTERVAL360[1] / 10]; // Milliseconds for main timer loop ()
 
 let currentPulse = MIN_PULSE;
 let fwdDirection = true;
@@ -39,14 +39,14 @@ function allServosDone() {
 
 function startServo(channel, time, direction) {
     servosRunning[channel] = true;
-    fwdDirection ? pulseLen = PULSE[1] : pulseLen = PULSE[0];
+    const pulseLen = fwdDirection ? PULSE[1] : PULSE[0];
     console.log("Setting pulse length to " + pulseLen);
+    const start = process.hrtime.bigint();
     pwm.setPulseLength(channel, pulseLen, 0, () => {
-        timer = setInterval(() => {
-            clearInterval(timer);
-            stopServo(channel);
-        }, time);
-    });        
+        const elapsed = Number(process.hrtime.bigint() - start) / 1e6; // ms
+        const remaining = Math.max(0, time - elapsed);
+        setTimeout(() => stopServo(channel), remaining);
+    });
 }
 
 function stopServo(channel) {
@@ -91,5 +91,5 @@ function mainLoop() {
                     direction *= -1;
                 }
         //}*/
-    }, LOOP_INTERVAL);
+    }, LOOP_INTERVAL[+fwdDirection]);
 }
