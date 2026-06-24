@@ -16,7 +16,7 @@ const STEP_SIZE = 50;   // How many uS to move per tick
 const INTERVAL = 20;    // Speed of movement (ms)
 
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
-const INTERVAL360 = 1275;               // milliseconds to spin 360 degrees
+const INTERVAL360 = [1381, 1275];       // milliseconds to spin 360 degrees backward,forward
 const LOOP_INTERVAL = INTERVAL360 / 10; // Milliseconds for main timer loop ()
 
 let currentPulse = MIN_PULSE;
@@ -76,7 +76,7 @@ function mainLoop() {
     // Start the movement loop
     sweepTimer = setInterval(() => {
         if (allServosDone()) {
-            startServo(0, INTERVAL360, fwdDirection);
+            startServo(0, INTERVAL360[int(fwdDirection)], fwdDirection);
             fwdDirection = !fwdDirection; // Reverse direction for next sweep
         }
     /*
