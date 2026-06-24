@@ -76,7 +76,7 @@ function mainLoop() {
     // Start the movement loop
     sweepTimer = setInterval(() => {
         if (allServosDone()) {
-            startServo(0, INTERVAL360[int(fwdDirection)], fwdDirection);
+            startServo(0, INTERVAL360[fwdDirection], fwdDirection);
             fwdDirection = !fwdDirection; // Reverse direction for next sweep
         }
     /*
