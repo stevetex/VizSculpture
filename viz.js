@@ -1,16 +1,15 @@
-const mic = require('mic');
+const naudiodon = require('naudiodon');
 const fft = require('fft-js').fft;
 const fftUtil = require('fft-js').util;
 
 // 1. Configure the Microphone
-const micInstance = mic({
-    rate: '16000',
-    channels: '1',
-    debug: false,
-    exitOnSilence: 6
+const micInputStream = new naudiodon.AudioIO({
+    inOptions: {
+        channelCount: 1,
+        sampleFormat: naudiodon.SampleFormat16Bit,
+        sampleRate: 16000
+    }
 });
-
-const micInputStream = micInstance.getAudioStream();
 
 // 2. Setup Data Buffers
 // FFT-js requires a power-of-2 length (e.g., 512, 1024)
@@ -22,9 +21,9 @@ micInputStream.on('data', (data) => {
     buffer = Buffer.concat([buffer, data]);
 
     // Once we have enough samples for one FFT window
-    if (buffer.length >= SAMPLES * 2) { // *2 because 16-bit samples are 2 bytes
-        const pcmData = new Float64Array(SAMPLES);
-        
+    while (buffer.length >= SAMPLES * 2) { // *2 because 16-bit samples are 2 bytes
+        const pcmData = [];
+
         for (let i = 0; i < SAMPLES; i++) {
             // Read 16-bit signed integer and normalize to [-1, 1]
             pcmData[i] = buffer.readInt16LE(i * 2) / 32768.0;
@@ -52,10 +51,11 @@ function renderVisualizer(magnitudes) {
 
     for (let i = 0; i < numBars; i++) {
         const mag = magnitudes[i * step];
-        const barLength = Math.min(Math.floor(mag * 10), termWidth - 10);
+        const barLength = Math.max(0, Math.min(Math.floor(mag * 10), termWidth - 10));
         const bar = '█'.repeat(barLength);
-        console.log(`${(i * 100).toString().padStart(4)}Hz: ${bar}`);
+        const freq = Math.round(i * step * 16000 / SAMPLES);
+        console.log(`${freq.toString().padStart(5)}Hz: ${bar}`);
     }
 }
 
-micInstance.start();
+micInputStream.start();

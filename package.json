@@ -5,6 +5,7 @@
     "i2c-bus": "^5.2.3",
     "johnny-five": "^2.1.0",
     "mic": "^2.1.2",
+    "naudiodon": "^2.3.6",
     "node-microphone": "^0.1.6",
     "pca9685": "^5.0.0",
     "pcm-extract": "^0.1.0",
