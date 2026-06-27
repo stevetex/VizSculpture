@@ -2,8 +2,6 @@ const { RtAudio, RtAudioFormat, RtAudioApi } = require('audify');
 const fft = require('fft-js').fft;
 const fftUtil = require('fft-js').util;
 
-// Device IDs — run `node -e "const {RtAudio}=require('audify'); const a=new RtAudio(); console.log(a.getDevices())"` to list
-const BT_DEVICE_ID  = -1; // -1 = system default; update to your PipeWire BT monitor device index
 const MIC_DEVICE_ID = -1; // -1 = system default; update to your mic device index
 
 const useMic   = process.argv.includes('--mic');
@@ -16,12 +14,31 @@ const SAMPLES = 512;
 
 // 1. Configure Audio Input
 const rtAudio = new RtAudio(process.platform === 'win32' ? RtAudioApi.WINDOWS_DS : RtAudioApi.UNSPECIFIED);
+
+// On Linux/PulseAudio, BT A2DP sources appear as "bluez_source.<MAC>.a2dp_source".
+// Falls back to the sole non-default input device if no keyword match is found.
+function findBluetoothInputDevice() {
+    const devices = rtAudio.getDevices();
+    const inputDevices = devices.filter(d => d.inputChannels > 0);
+    const btKeywords = ['bluez', 'bluetooth', 'handsfree', 'hands-free'];
+    const btDevice = inputDevices.find(d =>
+        btKeywords.some(kw => d.name.toLowerCase().includes(kw))
+    );
+    if (btDevice) return btDevice.id;
+    const defaultId = rtAudio.getDefaultInputDevice();
+    const nonDefault = inputDevices.filter(d => d.id !== defaultId);
+    if (nonDefault.length === 1) return nonDefault[0].id;
+    process.stderr.write('Warning: could not auto-detect Bluetooth device. Available input devices:\n');
+    inputDevices.forEach(d => process.stderr.write(`  id=${d.id} "${d.name}"\n`));
+    process.stderr.write('Falling back to default input device.\n');
+    return defaultId;
+}
+
 let resolvedDeviceId;
-if (useMic && process.platform === 'win32') {
-    resolvedDeviceId = rtAudio.getDefaultInputDevice();
+if (useMic) {
+    resolvedDeviceId = MIC_DEVICE_ID === -1 ? rtAudio.getDefaultInputDevice() : MIC_DEVICE_ID;
 } else {
-    const selectedDeviceId = useMic ? MIC_DEVICE_ID : BT_DEVICE_ID;
-    resolvedDeviceId = selectedDeviceId === -1 ? rtAudio.getDefaultInputDevice() : selectedDeviceId;
+    resolvedDeviceId = findBluetoothInputDevice();
 }
 
 const deviceInfo   = rtAudio.getDevices().find(d => d.id === resolvedDeviceId);
