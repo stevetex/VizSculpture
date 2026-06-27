@@ -1,61 +1,103 @@
-const naudiodon = require('naudiodon');
+const { RtAudio, RtAudioFormat, RtAudioApi } = require('audify');
 const fft = require('fft-js').fft;
 const fftUtil = require('fft-js').util;
 
-// 1. Configure the Microphone
-const micInputStream = new naudiodon.AudioIO({
-    inOptions: {
-        channelCount: 1,
-        sampleFormat: naudiodon.SampleFormat16Bit,
-        sampleRate: 16000
-    }
-});
+// Device IDs — run `node -e "const {RtAudio}=require('audify'); const a=new RtAudio(); console.log(a.getDevices())"` to list
+const BT_DEVICE_ID  = -1; // -1 = system default; update to your PipeWire BT monitor device index
+const MIC_DEVICE_ID = -1; // -1 = system default; update to your mic device index
 
-// 2. Setup Data Buffers
-// FFT-js requires a power-of-2 length (e.g., 512, 1024)
-const SAMPLES = 512; 
-let buffer = Buffer.alloc(0);
+const useMic   = process.argv.includes('--mic');
+const debugMode = process.argv.includes('--debug');
+const gainArg   = process.argv.find(a => a.startsWith('--gain='));
+const gainFactor = gainArg ? parseFloat(gainArg.split('=')[1]) : 1.0;
+const inputMode = useMic ? 'Microphone' : 'Bluetooth Stream';
 
-micInputStream.on('data', (data) => {
-    // Append incoming chunks to our buffer
-    buffer = Buffer.concat([buffer, data]);
+const SAMPLES = 512;
 
-    // Once we have enough samples for one FFT window
-    while (buffer.length >= SAMPLES * 2) { // *2 because 16-bit samples are 2 bytes
+// 1. Configure Audio Input
+const rtAudio = new RtAudio(process.platform === 'win32' ? RtAudioApi.WINDOWS_DS : RtAudioApi.UNSPECIFIED);
+let resolvedDeviceId;
+if (useMic && process.platform === 'win32') {
+    resolvedDeviceId = rtAudio.getDefaultInputDevice();
+} else {
+    const selectedDeviceId = useMic ? MIC_DEVICE_ID : BT_DEVICE_ID;
+    resolvedDeviceId = selectedDeviceId === -1 ? rtAudio.getDefaultInputDevice() : selectedDeviceId;
+}
+
+const deviceInfo   = rtAudio.getDevices().find(d => d.id === resolvedDeviceId);
+const inputChannels = deviceInfo?.inputChannels ?? 1;
+const sampleRate    = deviceInfo?.preferredSampleRate ?? 48000;
+
+if (debugMode) process.stderr.write(`Opening device id=${resolvedDeviceId} channels=${inputChannels} rate=${sampleRate}\n`);
+rtAudio.openStream(
+    null,
+    { deviceId: resolvedDeviceId, nChannels: inputChannels, firstChannel: 0 },
+    RtAudioFormat.RTAUDIO_FLOAT32,
+    sampleRate,
+    SAMPLES,
+    'VizSculpture',
+    (pcm) => {
+        // 2. Decode PCM and perform FFT — mix all channels down to mono
         const pcmData = [];
-
         for (let i = 0; i < SAMPLES; i++) {
-            // Read 16-bit signed integer and normalize to [-1, 1]
-            pcmData[i] = buffer.readInt16LE(i * 2) / 32768.0;
+            let sum = 0;
+            for (let ch = 0; ch < inputChannels; ch++) {
+                sum += pcm.readFloatLE((i * inputChannels + ch) * 4);
+            }
+            pcmData[i] = (sum / inputChannels) * gainFactor;
         }
 
-        // 3. Perform FFT
         const phasors = fft(pcmData);
         const magnitudes = fftUtil.fftMag(phasors);
 
-        // 4. Render to Console
-        renderVisualizer(magnitudes);
+        if (debugMode) {
+            const rawMax = Math.max(...Array.from({ length: pcm.length }, (_, i) => Math.abs(pcm[i])));
+            const maxPcm = Math.max(...pcmData.map(Math.abs));
+            const maxMag = Math.max(...magnitudes);
+            const peakDb = 20 * Math.log10(Math.max(maxMag / (SAMPLES / 2), 1e-10));
+            const firstFloats = Array.from({ length: 4 }, (_, i) => pcm.readFloatLE(i * 4).toExponential(2)).join(', ');
+            process.stderr.write(`buf=${pcm.length}B raw=${rawMax} floats=[${firstFloats}] pcm=${maxPcm.toFixed(7)} db=${peakDb.toFixed(1)}\n`);
+        }
 
-        // Clear buffer for the next window
-        buffer = buffer.slice(SAMPLES * 2);
+        // 3. Render to Console
+        renderVisualizer(magnitudes);
     }
-});
+);
+
+const MIN_DB = process.argv.includes('--debug') ? -120 : -60;
+const MAX_DB = 0;
+
+const FREQ_MIN = 40;    // Hz — sub-bass
+const FREQ_MAX = 16000; // Hz — upper treble
 
 function renderVisualizer(magnitudes) {
     const termWidth = process.stdout.columns || 80;
-    const numBars = 10; // Number of bars to show
-    const step = Math.floor(magnitudes.length / numBars / 2); // Show lower half (audible range)
-    
+    const numBars = 10;
+    const maxBar = termWidth - 12;
+    const freqPerBin = sampleRate / SAMPLES;
+    const logMin = Math.log2(FREQ_MIN);
+    const logMax = Math.log2(FREQ_MAX);
+
     process.stdout.write('\x1B[2J\x1B[0f'); // Clear terminal screen
-    console.log("--- Console FFT Visualizer (Speak into Mic) ---");
+    console.log(`--- Console FFT Visualizer [${inputMode}] ---`);
 
     for (let i = 0; i < numBars; i++) {
-        const mag = magnitudes[i * step];
-        const barLength = Math.max(0, Math.min(Math.floor(mag * 10), termWidth - 10));
+        const fLow  = Math.pow(2, logMin + (i / numBars) * (logMax - logMin));
+        const fHigh = Math.pow(2, logMin + ((i + 1) / numBars) * (logMax - logMin));
+        const binLow  = Math.max(1, Math.round(fLow  / freqPerBin));
+        const binHigh = Math.min(magnitudes.length - 1, Math.round(fHigh / freqPerBin));
+
+        // Average magnitude across all bins in this band
+        let sum = 0;
+        for (let b = binLow; b <= binHigh; b++) sum += magnitudes[b];
+        const mag = sum / Math.max(1, binHigh - binLow + 1);
+
+        const db = 20 * Math.log10(Math.max(mag / (SAMPLES / 2), 1e-10));
+        const normalized = Math.max(0, (db - MIN_DB) / (MAX_DB - MIN_DB));
+        const barLength = Math.floor(normalized * maxBar);
         const bar = '█'.repeat(barLength);
-        const freq = Math.round(i * step * 16000 / SAMPLES);
-        console.log(`${freq.toString().padStart(5)}Hz: ${bar}`);
+        console.log(`${Math.round(fLow).toString().padStart(5)}Hz: ${bar}`);
     }
 }
 
-micInputStream.start();
+rtAudio.start();

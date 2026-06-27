@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "audify": "^1.10.1",
     "cli-block": "^1.5.1",
     "fft-js": "^0.0.12",
     "i2c-bus": "^5.2.3",
