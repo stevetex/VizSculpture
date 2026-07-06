@@ -13,7 +13,7 @@ const CHANNELS = 1;     // Number of servos to control (1-10)
 const MIN_PULSE = 500;  // 0 degrees (typical)
 const MAX_PULSE = 2500; // 360 degrees
 const STEP_SIZE = 50;   // How many uS to move per tick
-const INTERVAL = 20;    // Speed of movement (ms)
+const POLL_INTERVAL = 10; // How often to check if a servo has stopped (ms)
 
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
 const INTERVAL360 = [1370, 1340];       // milliseconds to spin 360 degrees backward,forward
@@ -35,6 +35,18 @@ const pwm = new Pca9685Driver(options, function(err) {
 
 function allServosDone() {
     return servosRunning.every(status => status === false);
+}
+
+function waitStartServo(channel, time, direction) {
+    return new Promise((resolve) => {
+        const waitTimer = setInterval(() => {
+            if (!servosRunning[channel]) {
+                clearInterval(waitTimer);
+                startServo(channel, time, direction);
+                resolve();
+            }
+        }, POLL_INTERVAL);
+    });
 }
 
 function startServo(channel, time, direction) {
