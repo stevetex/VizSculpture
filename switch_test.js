@@ -9,7 +9,7 @@ pigpio.once('connected', () => {
     const reed = pigpio.gpio(pin);
     reed.modeSet('input');
     reed.pullUpDown(2); // 2 = PUD_UP
-    reed.glitchFilter(50000); // 50ms debounce
+    reed.glitchSet(50000); // 50ms debounce
 
     reed.notify((level, tick) => {
       console.log(`GPIO ${pin}: ${level === 0 ? 'CLOSED' : 'OPEN'}`);
