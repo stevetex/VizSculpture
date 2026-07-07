@@ -2,10 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(curl:*)",
-      "Bash(curl *)"
+      "Bash(curl *)",
       "WebFetch(domain:github.com)",
       "Bash(npm view *)",
-      "Read(//tmp/**)",
+      "Read(//tmp/**)"
     ]
   }
 }
