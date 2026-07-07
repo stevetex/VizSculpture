@@ -1,22 +1,11 @@
 {
   "permissions": {
     "allow": [
+      "Bash(curl:*)",
+      "Bash(curl *)"
       "WebFetch(domain:github.com)",
       "Bash(npm view *)",
-      "Bash(curl -s https://api.github.com/repos/guymcswain/pigpio-client)",
-      "Bash(curl -s https://raw.githubusercontent.com/guymcswain/pigpio-client/master/README.md -o /tmp/readme.md)",
       "Read(//tmp/**)",
-      "Bash(curl -s https://api.github.com/repos/guymcswain/pigpio-client/contents/)",
-      "Bash(curl -s https://raw.githubusercontent.com/guymcswain/pigpio-client/master/readme.md -o /tmp/readme.md)",
-      "Bash(curl -s https://raw.githubusercontent.com/guymcswain/pigpio-client/master/pigpio-client.js -o /tmp/pigpio-client.js)",
-      "Bash(curl -s https://api.github.com/repos/guymcswain/pigpio-client/contents/examples)",
-      "Bash(grep -n -i \"notify\" /tmp/readme.md | head -60)",
-      "Bash(curl -s https://raw.githubusercontent.com/guymcswain/pigpio-client/master/SIF.js -o /tmp/SIF.js)",
-      "Bash(grep -n \"function request\" /tmp/pigpio-client.js)",
-      "Bash(curl -s \"https://api.github.com/search/issues?q=repo:guymcswain/pigpio-client+notify\")",
-      "Bash(curl -s \"https://api.github.com/repos/guymcswain/pigpio-client/issues/32\")",
-      "Bash(curl -s \"https://api.github.com/repos/guymcswain/pigpio-client/issues/32/comments\")",
-      "Bash(grep -n \"that.gpio = function\\\\|this.gpio\\\\|function gpio\\\\|that\\\\.gpio\" /tmp/pigpio-client.js | head)"
     ]
   }
 }
