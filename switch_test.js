@@ -14,7 +14,7 @@ pigpio.once('connected', async () => {
       const reed = pigpio.gpio(pin);
       await reed.modeSet('input');
       await reed.pullUpDown(2); // PUD_UP
-      await reed.glitchSet(0); // glitchSet only filters notifications, not reads
+      await reed.glitchSet(5000); // 5ms debounce for contact bounce (only filters notifications, not reads)
 
       const level = await reed.read();
       console.log(`GPIO ${pin}: initial level = ${level}`);
