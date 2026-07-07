@@ -2,7 +2,7 @@ const pigpio = require('pigpio-client').pigpio({ host: 'localhost' });
 
 const pins = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
-pigpio.once('connected', () => {
+pigpio.once('connected', async () => {
   console.log('Connected to pigpiod');
 
   for (const pin of pins) {
