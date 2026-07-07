@@ -14,7 +14,7 @@ pigpio.once('connected', async () => {
     reed.notify((level, tick) => {
       console.log(`GPIO ${pin}: ${level === 0 ? 'CLOSED' : 'OPEN'}`);
     });
-  });
+  }
 });
 
 pigpio.once('error', (err) => {
