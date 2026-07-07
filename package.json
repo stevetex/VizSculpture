@@ -1,19 +1,5 @@
 {
-  "dependencies": {
-    "audify": "^1.10.1",
-    "cli-block": "^1.5.1",
-    "fft-js": "^0.0.12",
-    "i2c-bus": "^5.2.3",
-    "johnny-five": "^2.1.0",
-    "mic": "^2.1.2",
-    "naudiodon": "^2.3.6",
-    "node-microphone": "^0.1.6",
-    "pca9685": "^5.0.0",
-    "pcm-extract": "^0.1.0",
-    "pigpio": "^3.3.1",
-    "readline": "^1.3.0"
-  },
-  "name": "vizsculpture",
+  "name": "viz",
   "version": "1.0.0",
   "description": "",
   "main": "viz.js",
@@ -30,5 +16,12 @@
   "bugs": {
     "url": "https://github.com/stevetex/VizSculpture/issues"
   },
-  "homepage": "https://github.com/stevetex/VizSculpture#readme"
+  "homepage": "https://github.com/stevetex/VizSculpture#readme",
+  "dependencies": {
+    "audify": "^1.10.1",
+    "fft-js": "^0.0.12",
+    "i2c-bus": "^5.2.3",
+    "pca9685": "^5.0.0",
+    "pigpio-client": "^1.5.2"
+  }
 }
