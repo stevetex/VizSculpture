@@ -128,7 +128,7 @@ process.on('unhandledRejection', (err) => {
 
 pigpio.once('connected', async () => {
   console.log('Connected to pigpiod');
-  for (i = 0; i < switches.length; i++) {
+  for (let i = 0; i < switches.length; i++) {
     try {
       const reed = pigpio.gpio(switches[i].pin);
       await reed.modeSet('input');
@@ -141,7 +141,7 @@ pigpio.once('connected', async () => {
 
       reed.notify((level, tick) => {
         switches[i].open = level === 1;
-        switchFlipped(i, switches[i]);
+        switchFlipped(i);
       });
       console.log(`GPIO ${switches[i].pin}: notify registered`);
     } catch (err) {
@@ -170,8 +170,8 @@ function waitForConnections() {
     });
 }
 
-function switchFlipped(index, switchNum) {
-    console.log(`Switch ${index} flipped. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
+function switchFlipped(index) {
+    console.log(`Switch ${index} flipped. State: ${switches[index].open ? 'OPEN' : 'CLOSED'}`);
     if (servos[index].position > 0) {
         stopServo(index);
         servos[index].position = 0;
