@@ -188,5 +188,6 @@ console.log("Servo starting. Press Ctrl+C to stop.");
     // Start the movement
     servos[0].position = 1;
     rotationTimer = performance.now();
-    await waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
+//    await waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
+    await waitStartServo(0, 100000, fwdDirection);
 })();
