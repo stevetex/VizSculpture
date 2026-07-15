@@ -185,6 +185,8 @@ function switchFlipped(index) {
     }
 }
 
+const SHIFTED_DIGITS = { '!': '1', '@': '2', '#': '3', '$': '4', '%': '5', '^': '6', '&': '7', '*': '8', '(': '9', ')': '0' };
+
 function startKeyboardControl() {
     readline.emitKeypressEvents(process.stdin);
     if (process.stdin.isTTY) {
@@ -195,15 +197,17 @@ function startKeyboardControl() {
             shutdown();
             return;
         }
-        if (str && /^[0-9]$/.test(str)) {
+        const shifted = str in SHIFTED_DIGITS;
+        const digit = shifted ? SHIFTED_DIGITS[str] : str;
+        if (digit && /^[0-9]$/.test(digit)) {
             servos[0].position = 1;
             rotationTimer = performance.now();
-            numStr = Number(str);
-            if (numStr === 0) 
-                numstr = 1000
+            numStr = Number(digit);
+            if (numStr === 0)
+                numStr = 1000
             else
                 numStr = numStr * 100;
-            const direction = key.shift ? !fwdDirection : fwdDirection;
+            const direction = shifted ? !fwdDirection : fwdDirection;
             await waitStartServo(0, numStr, direction);
         }
     });
