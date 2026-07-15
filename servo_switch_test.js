@@ -41,8 +41,8 @@ const MIN_PULSE = 500;  // 0 degrees (typical)
 const MAX_PULSE = 2500; // 360 degrees
 const STEP_SIZE = 50;   // How many uS to move per tick
 const POLL_INTERVAL = 10; // How often to check if a servo has stopped (ms)
-const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
-const INTERVAL360 = [1370, 1340];       // milliseconds to spin 360 degrees backward,forward
+const PULSE = [2500, 500];              // Pulse length for max reverse and max forward
+const INTERVAL360 = [1340, 1370];       // milliseconds to spin 360 degrees backward,forward
 const LOOP_INTERVAL = [INTERVAL360[0] / 10, INTERVAL360[1] / 10]; // Milliseconds for main timer loop ()
 
 let currentPulse = MIN_PULSE;
