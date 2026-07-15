@@ -203,7 +203,7 @@ function startKeyboardControl() {
                 numstr = 1000
             else
                 numStr = numStr * 100;
-            await waitStartServo(0, Number(str) * 1000, fwdDirection);
+            await waitStartServo(0, numStr, fwdDirection);
         }
     });
 }
