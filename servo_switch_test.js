@@ -161,12 +161,12 @@ let rotationTimer = 0;
 function switchFlipped(index, switchNum) {
     console.log(`Switch ${index} pressed. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
     stopServo(index);
-    rotationTimer = (Performance.now() - rotationTimer) * 1000; // Convert to seconds
+    rotationTimer = (performance.now() - rotationTimer) * 1000; // Convert to seconds
     servos[index].position = 0;
     console.log(`Execution time: ${rotationTimer.toFixed(4)} sec`);
 }
 
 console.log("Servo starting. Press Ctrl+C to stop.");
 // Start the movement
-rotationTimer = Performance.now();
+rotationTimer = performance.now();
 waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
