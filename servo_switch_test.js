@@ -195,9 +195,14 @@ function startKeyboardControl() {
             shutdown();
             return;
         }
-        if (str && /^[1-9]$/.test(str)) {
+        if (str && /^[0-9]$/.test(str)) {
             servos[0].position = 1;
             rotationTimer = performance.now();
+            numStr = Number(str);
+            if (numStr === 0) 
+                numstr = 1000
+            else
+                numStr = numStr * 100;
             await waitStartServo(0, Number(str) * 1000, fwdDirection);
         }
     });
