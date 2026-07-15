@@ -25,7 +25,7 @@ let switches = [
     new ReedSwitch(13, 33, true)
 ];
 
-let buttonsConnected = false;
+let switchesConnected = false;
 
 // servo configuration
 
@@ -148,7 +148,7 @@ pigpio.once('connected', async () => {
       console.error(`GPIO ${switches[i].pin}: setup failed:`, err);
     }
   }
-  buttonsConnected = true;
+  switchesConnected = true;
 });
 
 pigpio.once('error', (err) => {
@@ -162,7 +162,7 @@ let rotationTimer = 0;
 function waitForConnections() {
     return new Promise((resolve) => {
         const checkTimer = setInterval(() => {
-            if (buttonsConnected && driverConnected) {
+            if (switchesConnected && driverConnected) {
                 clearInterval(checkTimer);
                 resolve();
             }
@@ -171,13 +171,15 @@ function waitForConnections() {
 }
 
 function switchFlipped(index) {
-    console.log(`Switch ${index} flipped. State: ${switches[index].open ? 'OPEN' : 'CLOSED'}`);
-    if (servos[index].position > 0) {
-        stopServo(index);
-        servos[index].position = 0;
+    if (switchesConnected && driverConnected) {
+        console.log(`Switch ${index} flipped. State: ${switches[index].open ? 'OPEN' : 'CLOSED'}`);
+        if (servos[index].position > 0) {
+            stopServo(index);
+            servos[index].position = 0;
+        }
+        rotationTimer = (performance.now() - rotationTimer) * 1000; // Convert to seconds
+        console.log(`Servo spin time: ${rotationTimer.toFixed(4)} sec`);
     }
-    rotationTimer = (performance.now() - rotationTimer) * 1000; // Convert to seconds
-    console.log(`Servo spin time: ${rotationTimer.toFixed(4)} sec`);
 }
 
 console.log("Servo starting. Press Ctrl+C to stop.");
