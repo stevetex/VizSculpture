@@ -203,7 +203,8 @@ function startKeyboardControl() {
                 numstr = 1000
             else
                 numStr = numStr * 100;
-            await waitStartServo(0, numStr, fwdDirection);
+            const direction = key.shift ? !fwdDirection : fwdDirection;
+            await waitStartServo(0, numStr, direction);
         }
     });
 }
