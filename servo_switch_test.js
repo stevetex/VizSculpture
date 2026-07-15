@@ -74,17 +74,6 @@ function allServosDone() {
     return servos.every(servo => !servo.running);
 }
 
-function waitForConnections() {
-    return new Promise((resolve) => {
-        const checkTimer = setInterval(() => {
-            if (buttonsConnected && driverConnected) {
-                clearInterval(checkTimer);
-                resolve();
-            }
-        }, POLL_INTERVAL);
-    });
-}
-
 function waitStartServo(channel, time, direction) {
     return new Promise((resolve) => {
         const waitTimer = setInterval(() => {
@@ -169,6 +158,17 @@ pigpio.once('error', (err) => {
 // servo/switch interaction
 
 let rotationTimer = 0;
+
+function waitForConnections() {
+    return new Promise((resolve) => {
+        const checkTimer = setInterval(() => {
+            if (buttonsConnected && driverConnected) {
+                clearInterval(checkTimer);
+                resolve();
+            }
+        }, POLL_INTERVAL);
+    });
+}
 
 function switchFlipped(index, switchNum) {
     console.log(`Switch ${index} flipped. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
