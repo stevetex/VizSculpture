@@ -1,6 +1,7 @@
 const i2c = require('i2c-bus');
 const Pca9685Driver = require('pca9685').Pca9685Driver;
 const pigpio = require('pigpio-client').pigpio({ host: 'localhost' });
+const readline = require('readline');
 
 // reed switch configuration
 
@@ -107,17 +108,19 @@ function stopServo(channel) {
     });
 }
 
+function shutdown() {
+    console.log("\nStopping servos...");
+    stopServo(0);
+    clearInterval(sweepTimer);
+    setTimeout(() => {
+        pwm.allChannelsOff();
+        process.exit();
+    }, 100); // Small delay to ensure stop command is sent before process dies
+}
+
 function initExit() {
     // Graceful exit: Turn off the PWM signal when user presses Ctrl+C
-    process.on('SIGINT', () => {
-        console.log("\nStopping servos...");
-        stopServo(0);
-        clearInterval(sweepTimer);
-        setTimeout(() => {
-            pwm.allChannelsOff();
-            process.exit();
-        }, 100); // Small delay to ensure stop command is sent before process dies
-    });
+    process.on('SIGINT', shutdown);
 }
 
 // switch implementation
@@ -182,12 +185,26 @@ function switchFlipped(index) {
     }
 }
 
-console.log("Servo starting. Press Ctrl+C to stop.");
+function startKeyboardControl() {
+    readline.emitKeypressEvents(process.stdin);
+    if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+    }
+    process.stdin.on('keypress', async (str, key) => {
+        if (str === 'x' || (key.ctrl && key.name === 'c')) {
+            shutdown();
+            return;
+        }
+        if (str && /^[1-9]$/.test(str)) {
+            servos[0].position = 1;
+            rotationTimer = performance.now();
+            await waitStartServo(0, Number(str) * 1000, fwdDirection);
+        }
+    });
+}
+
+console.log("Servo ready. Press 1-9 to spin, x to quit.");
 (async () => {
     await waitForConnections();
-    // Start the movement
-    servos[0].position = 1;
-    rotationTimer = performance.now();
-//    await waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
-    await waitStartServo(0, 100000, fwdDirection);
+    startKeyboardControl();
 })();
