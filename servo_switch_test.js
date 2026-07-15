@@ -74,6 +74,17 @@ function allServosDone() {
     return servos.every(servo => !servo.running);
 }
 
+function waitForConnections() {
+    return new Promise((resolve) => {
+        const checkTimer = setInterval(() => {
+            if (buttonsConnected && driverConnected) {
+                clearInterval(checkTimer);
+                resolve();
+            }
+        }, POLL_INTERVAL);
+    });
+}
+
 function waitStartServo(channel, time, direction) {
     return new Promise((resolve) => {
         const waitTimer = setInterval(() => {
@@ -148,6 +159,7 @@ pigpio.once('connected', async () => {
       console.error(`GPIO ${switches[i].pin}: setup failed:`, err);
     }
   }
+  buttonsConnected = true;
 });
 
 pigpio.once('error', (err) => {
@@ -169,7 +181,10 @@ function switchFlipped(index, switchNum) {
 }
 
 console.log("Servo starting. Press Ctrl+C to stop.");
-// Start the movement
-servos[0].position = 1;
-rotationTimer = performance.now();
-waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
+(async () => {
+    await waitForConnections();
+    // Start the movement
+    servos[0].position = 1;
+    rotationTimer = performance.now();
+    await waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
+})();
