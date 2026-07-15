@@ -159,14 +159,17 @@ pigpio.once('error', (err) => {
 let rotationTimer = 0;
 
 function switchFlipped(index, switchNum) {
-    console.log(`Switch ${index} pressed. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
-    stopServo(index);
+    console.log(`Switch ${index} flipped. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
+    if (servos[index].position > 0) {
+        stopServo(index);
+        servos[index].position = 0;
+    }
     rotationTimer = (performance.now() - rotationTimer) * 1000; // Convert to seconds
-    servos[index].position = 0;
-    console.log(`Execution time: ${rotationTimer.toFixed(4)} sec`);
+    console.log(`Servo spin time: ${rotationTimer.toFixed(4)} sec`);
 }
 
 console.log("Servo starting. Press Ctrl+C to stop.");
 // Start the movement
+servos[0].position = 1;
 rotationTimer = performance.now();
 waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
