@@ -177,7 +177,7 @@ function switchFlipped(index) {
             stopServo(index);
             servos[index].position = 0;
         }
-        rotationTimer = (performance.now() - rotationTimer) * 1000; // Convert to seconds
+        rotationTimer = (performance.now() - rotationTimer) / 1000; // Convert to seconds
         console.log(`Servo spin time: ${rotationTimer.toFixed(4)} sec`);
     }
 }
