@@ -156,18 +156,17 @@ pigpio.once('error', (err) => {
 
 // servo/switch interaction
 
+let rotationTimer = 0;
+
 function switchFlipped(index, switchNum) {
     console.log(`Switch ${index} pressed. State: ${switches[switchNum].open ? 'OPEN' : 'CLOSED'}`);
     stopServo(index);
+    rotationTimer = (Performance.now() - rotationTimer) * 1000; // Convert to seconds
     servos[index].position = 0;
+    console.log(`Execution time: ${rotationTimer.toFixed(4)} sec`);
 }
 
-console.log("Sweep started. Press Ctrl+C to stop.");
-// Start the movement loop
-sweepTimer = setInterval(() => {
-    if (allServosDone()) {
-        waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
-        fwdDirection = !fwdDirection; // Reverse direction for next sweep
-    }
-}, LOOP_INTERVAL[+fwdDirection]);
-
+console.log("Servo starting. Press Ctrl+C to stop.");
+// Start the movement
+rotationTimer = Performance.now();
+waitStartServo(0, INTERVAL360[+fwdDirection], fwdDirection);
