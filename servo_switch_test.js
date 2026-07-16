@@ -89,7 +89,7 @@ function waitStartServo(channel, time, direction) {
 
 function startServo(channel, time, direction) {
     servos[channel].running = true;
-    const pulseLen = fwdDirection ? PULSE[1] : PULSE[0];
+    const pulseLen = direction ? PULSE[1] : PULSE[0];
     console.log("Setting pulse length to " + pulseLen);
     const start = process.hrtime.bigint();
     pwm.setPulseLength(channel, pulseLen, 0, () => {
