@@ -45,20 +45,24 @@ const POLL_INTERVAL = 10; // How often to check if a servo has stopped (ms)
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
 const INTERVAL360 = [1370, 1340];       // milliseconds to spin 360 degrees backward,forward
 const LOOP_INTERVAL = [INTERVAL360[0] / 10, INTERVAL360[1] / 10]; // Milliseconds for main timer loop ()
+const UP = true;
+const DOWN = false;
 
 let currentPulse = MIN_PULSE;
-let fwdDirection = true;
+let motorDirection = UP;
 let sweepTimer = null;
 let driverConnected = false;
 
 class ServoState {
-    constructor(running, position) {
+    constructor(running, direction, position) {
         this.running = running;
+        this.direction = direction;
         this.position = position;
+        this.timestamp = 0;
     }
 }
 
-let servos = [new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0), new ServoState(false, 0)];
+let servos = [new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0), new ServoState(false, DOWN, 0)];
 
 // servo implementation
 
@@ -92,6 +96,8 @@ function startServo(channel, time, direction) {
     const pulseLen = direction ? PULSE[1] : PULSE[0];
     console.log("Setting pulse length to " + pulseLen);
     const start = process.hrtime.bigint();
+    servos[channel].timestamp = performance.now();
+    servos[channel].direction = direction;
     pwm.setPulseLength(channel, pulseLen, 0, () => {
         const elapsed = Number(process.hrtime.bigint() - start) / 1e6; // ms
         const remaining = Math.max(0, time - elapsed);
@@ -101,6 +107,7 @@ function startServo(channel, time, direction) {
 
 function stopServo(channel) {
     pwm.setDutyCycle(channel, 0.07558, 0, function (err) { // 7.5% duty cycle = 1500us
+        console.log(`Servo ${channel} stopped. Total run time: ${(performance.now() - servos[channel].timestamp).toFixed(4)} ms`);
         if (err) {
             console.error("Error stopping servo " + channel, err);
         }
@@ -162,8 +169,6 @@ pigpio.once('error', (err) => {
 
 // servo/switch interaction
 
-let rotationTimer = 0;
-
 function waitForConnections() {
     return new Promise((resolve) => {
         const checkTimer = setInterval(() => {
@@ -178,12 +183,12 @@ function waitForConnections() {
 function switchFlipped(index) {
     if (switchesConnected && driverConnected) {
         console.log(`Switch ${index} flipped. State: ${switches[index].open ? 'OPEN' : 'CLOSED'}`);
-        if (servos[index].position > 0) {
-            stopServo(index);
+        if (!switches[index].open) {
+            if ((servos[index].running) && (servos[index].direction == DOWN)) {
+                stopServo(index);
+            }
             servos[index].position = 0;
         }
-        rotationTimer = (performance.now() - rotationTimer) / 1000; // Convert to seconds
-        console.log(`Servo spin time: ${rotationTimer.toFixed(4)} sec`);
     }
 }
 
@@ -203,9 +208,8 @@ function startKeyboardControl() {
         const digit = shifted ? SHIFTED_DIGITS[str] : str;
         if (digit && /^[0-9]$/.test(digit)) {
             const channel = Number(digit);
-            const direction = shifted ? !fwdDirection : fwdDirection;
-            servos[channel].position = 1;
-            rotationTimer = performance.now();
+            const direction = shifted ? !motorDirection : motorDirection;
+            servos[channel].position = 0;
             await waitStartServo(channel, INTERVAL360[+direction], direction);
         }
     });
