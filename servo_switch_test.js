@@ -37,7 +37,7 @@ const options = {
     debug: false
 };
 
-const CHANNELS = 1;     // Number of servos to control (1-10)
+const CHANNELS = 10;    // Number of servos to control (1-10)
 const MIN_PULSE = 500;  // 0 degrees (typical)
 const MAX_PULSE = 2500; // 360 degrees
 const STEP_SIZE = 50;   // How many uS to move per tick
@@ -110,7 +110,9 @@ function stopServo(channel) {
 
 function shutdown() {
     console.log("\nStopping servos...");
-    stopServo(0);
+    servos.forEach((servo, channel) => {
+        if (servo.running) stopServo(channel);
+    });
     clearInterval(sweepTimer);
     setTimeout(() => {
         pwm.allChannelsOff();
@@ -200,20 +202,16 @@ function startKeyboardControl() {
         const shifted = str in SHIFTED_DIGITS;
         const digit = shifted ? SHIFTED_DIGITS[str] : str;
         if (digit && /^[0-9]$/.test(digit)) {
-            servos[0].position = 1;
-            rotationTimer = performance.now();
-            numStr = Number(digit);
-            if (numStr === 0)
-                numStr = 1000
-            else
-                numStr = numStr * 100;
+            const channel = Number(digit);
             const direction = shifted ? !fwdDirection : fwdDirection;
-            await waitStartServo(0, numStr, direction);
+            servos[channel].position = 1;
+            rotationTimer = performance.now();
+            await waitStartServo(channel, INTERVAL360[+direction], direction);
         }
     });
 }
 
-console.log("Servo ready. Press 1-9 to spin, x to quit.");
+console.log("Servo ready. Press 0-9 to spin the matching servo (Shift+digit to reverse), x to quit.");
 (async () => {
     await waitForConnections();
     startKeyboardControl();
