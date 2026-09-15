@@ -37,18 +37,13 @@ const options = {
     debug: false
 };
 
-const CHANNELS = 10;    // Number of servos to control (1-10)
-const MIN_PULSE = 500;  // 0 degrees (typical)
-const MAX_PULSE = 2500; // 360 degrees
-const STEP_SIZE = 50;   // How many uS to move per tick
 const POLL_INTERVAL = 10; // How often to check if a servo has stopped (ms)
 const PULSE = [500, 2500];              // Pulse length for max reverse and max forward
-const INTERVAL360 = [1370, 1340];       // milliseconds to spin 360 degrees backward,forward
-const LOOP_INTERVAL = [INTERVAL360[0] / 10, INTERVAL360[1] / 10]; // Milliseconds for main timer loop ()
+const INTERVAL_MAX = [2000, 1340];      // max milliseconds to spin motor backward,forward
 const UP = true;
 const DOWN = false;
 
-let currentPulse = MIN_PULSE;
+let currentPulse = PULSE[0];
 let motorDirection = UP;
 let sweepTimer = null;
 let driverConnected = false;
@@ -210,7 +205,7 @@ function startKeyboardControl() {
             const channel = Number(digit);
             const direction = shifted ? !motorDirection : motorDirection;
             servos[channel].position = 0;
-            await waitStartServo(channel, INTERVAL360[+direction], direction);
+            await waitStartServo(channel, INTERVAL_MAX[+direction], direction);
         }
     });
 }
