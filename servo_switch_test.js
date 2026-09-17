@@ -21,7 +21,7 @@ let switches = [
     new ReedSwitch(8, 24, true),
     new ReedSwitch(9, 21, true),
     new ReedSwitch(10, 19, true),
-    new ReedSwitch(11, 23, true),
+     new ReedSwitch(11, 23, true),
     new ReedSwitch(12, 32, true),
     new ReedSwitch(13, 33, true)
 ];
